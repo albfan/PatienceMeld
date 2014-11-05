@@ -33,6 +33,7 @@ import tree
 import re
 import stat
 import time
+import mtree 
 
 import ui.emblemcellrenderer
 
@@ -71,7 +72,7 @@ def all_same(lst):
     return not lst or lst.count(lst[0]) == len(lst)
 
 
-def _files_same(files, regexes):
+def _files_same(files, regexes, model=None):
     """Determine whether a list of files are the same.
 
     Possible results are:
@@ -81,6 +82,12 @@ def _files_same(files, regexes):
       DodgyDifferent: The files are superficially different
       FileError: There was a problem reading one or more of the files
     """
+
+    if model != None:
+        if all([model.rsync_tree.contains_path(re.sub("^"+model.locations[i]+"/?","",files[i])) for i in range(min(len(files),len(model.locations)))]):
+            return Different
+        else:
+            return Same
 
     # One file is the same as itself
     if len(files) < 2:
@@ -219,7 +226,7 @@ class DirDiff(melddoc.MeldDoc, gnomeglade.Component):
         tree.STATE_MISSING: "delete",
     }
 
-    def __init__(self, prefs, num_panes):
+    def __init__(self, prefs, num_panes, rsync_file=None):
         melddoc.MeldDoc.__init__(self, prefs)
         gnomeglade.Component.__init__(self, paths.ui_dir("dirdiff.ui"), "dirdiff")
 
@@ -259,7 +266,7 @@ class DirDiff(melddoc.MeldDoc, gnomeglade.Component):
         self.map_widgets_into_lists(["treeview", "fileentry", "scrolledwindow",
                                      "diffmap", "linkmap", "msgarea_mgr",
                                      "vbox"])
-        self.set_num_panes(num_panes)
+        self.set_num_panes(num_panes, rsync_file)
         self.focus_in_events = []
         self.focus_out_events = []
         for treeview in self.treeview:
@@ -434,6 +441,7 @@ class DirDiff(melddoc.MeldDoc, gnomeglade.Component):
     def set_locations(self, locations):
         self.set_num_panes(len(locations))
         locations = [os.path.abspath(l or ".") for l in locations]
+        self.model.locations = locations
         self.model.clear()
         for pane, loc in enumerate(locations):
             self.fileentry[pane].set_filename(loc)
@@ -564,6 +572,7 @@ class DirDiff(melddoc.MeldDoc, gnomeglade.Component):
                     differences |= self._update_item_state(child)
             else: # directory is empty, add a placeholder
                 self.model.add_empty(it)
+
             if differences:
                 expanded.add(path)
 
@@ -874,7 +883,7 @@ class DirDiff(melddoc.MeldDoc, gnomeglade.Component):
             is_present = [ os.path.exists( f ) for f in curfiles ]
             all_present = 0 not in is_present
             if all_present:
-                if _files_same(curfiles, regexes) in (Same, SameFiltered):
+                if _files_same(curfiles, regexes,self.model) in (Same, SameFiltered):
                     state = tree.STATE_NORMAL
                 else:
                     state = tree.STATE_MODIFIED
@@ -895,14 +904,19 @@ class DirDiff(melddoc.MeldDoc, gnomeglade.Component):
                 return os.stat(f).st_mtime
             except OSError:
                 return 0
+
         # find the newest file, checking also that they differ
         mod_times = [ mtime(f) for f in files[:self.num_panes] ]
         newest_index = mod_times.index( max(mod_times) )
         if mod_times.count( max(mod_times) ) == len(mod_times):
             newest_index = -1 # all same
         all_present = 0 not in mod_times
+
+        # At this point check if both dir or files are the same.
+        # TODO: Optimize with rsync to avoid large downloads
+
         if all_present:
-            all_same = _files_same(files, regexes)
+            all_same = _files_same(files, regexes, self.model)
             all_present_same = all_same
         else:
             lof = []
@@ -910,7 +924,7 @@ class DirDiff(melddoc.MeldDoc, gnomeglade.Component):
                 if mod_times[j]:
                     lof.append( files[j] )
             all_same = Different
-            all_present_same = _files_same(lof, regexes)
+            all_present_same = _files_same(lof, regexes, self.model)
         different = 1
         one_isdir = [None for i in range(self.model.ntree)]
         for j in range(self.model.ntree):
@@ -999,9 +1013,11 @@ class DirDiff(melddoc.MeldDoc, gnomeglade.Component):
                     chunkstart, laststate = index, state
         return tree_state_iter
 
-    def set_num_panes(self, n):
+    def set_num_panes(self, n, rsync_file=None):
         if n != self.num_panes and n in (1,2,3):
             self.model = DirDiffTreeStore(n)
+            self.model.rsync_tree = mtree.parse_rsync_file(rsync_file)
+
             for i in range(n):
                 self.treeview[i].set_model(self.model)
 

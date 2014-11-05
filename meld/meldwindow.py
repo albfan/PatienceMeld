@@ -584,9 +584,9 @@ class MeldWindow(gnomeglade.Component):
         # Allow reordering of tabs
         self.notebook.set_tab_reorderable(page.widget, True);
 
-    def append_dirdiff(self, dirs, auto_compare=False):
+    def append_dirdiff(self, dirs, auto_compare=False, rsync_list=None):
         assert len(dirs) in (1,2,3)
-        doc = dirdiff.DirDiff(app.prefs, len(dirs))
+        doc = dirdiff.DirDiff(app.prefs, len(dirs), rsync_list)
         self._append_page(doc, "folder")
         doc.set_locations(dirs)
         # FIXME: This doesn't work, as dirdiff behaves differently to vcview
@@ -608,7 +608,7 @@ class MeldWindow(gnomeglade.Component):
         doc.set_files(files)
         return doc
 
-    def append_diff(self, paths, auto_compare=False, algorithm=None):
+    def append_diff(self, paths, auto_compare=False, rsync_list=None, algorithm=None):
         dirslist = [p for p in paths if os.path.isdir(p)]
         fileslist = [p for p in paths if os.path.isfile(p)]
         if dirslist and fileslist:
@@ -631,7 +631,7 @@ class MeldWindow(gnomeglade.Component):
                 builtfilelist.append(elem)
             return self.append_filediff(builtfilelist)
         elif dirslist:
-            return self.append_dirdiff(paths, auto_compare)
+            return self.append_dirdiff(paths, auto_compare, rsync_list)
         else:
             return self.append_filediff(paths, algorithm)
 
@@ -655,7 +655,7 @@ class MeldWindow(gnomeglade.Component):
         doc.connect("create-diff", lambda obj,arg: self.append_diff(arg))
         doc.run_diff([path])
 
-    def open_paths(self, paths, auto_compare=False, algorithm=None):
+    def open_paths(self, paths, auto_compare=False, rsync_list=None, algorithm=None):
         tab = None
         if len(paths) == 1:
             a = paths[0]
@@ -665,7 +665,7 @@ class MeldWindow(gnomeglade.Component):
                 tab = self.append_vcview(a, auto_compare)
 
         elif len(paths) in (2, 3, 4):
-            tab = self.append_diff(paths, auto_compare, algorithm)
+            tab = self.append_diff(paths, auto_compare, rsync_list, algorithm)
         return tab
 
     def current_doc(self):

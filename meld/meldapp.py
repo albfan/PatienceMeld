@@ -166,6 +166,7 @@ class MeldApp(gobject.GObject):
         parser.add_option("-a", "--auto-compare", action="store_true", default=False, 
                 help=_("Automatically compare all differing files on startup"))
         parser.add_option("-u", "--unified", action="store_true", help=_("Ignored for compatibility"))
+        parser.add_option("--rsync-list", action="store", type="string", dest="rsync_list", help=_("Fixed list of different files"))
         parser.add_option("--algorithm", action="store", type="choice", dest="algorithm", 
                 choices=("unified","raw","patience"), default="unified", help=_("Algorithm for comparing files"))
         parser.add_option("-o", "--output", action="store", type="string", dest="outfile", default=None, 
@@ -184,7 +185,7 @@ class MeldApp(gobject.GObject):
                 parser.error(_("can't compare more than three directories"))
             self.window.open_paths(files)
 
-        tab = self.window.open_paths(args, options.auto_compare, options.algorithm)
+        tab = self.window.open_paths(args, options.auto_compare, options.rsync_list, options.algorithm)
         if tab:
             tab.set_labels(options.label)
 

@@ -15,7 +15,7 @@
 ### Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import difflib
-
+from bzrlib.patiencediff import PatienceSequenceMatcher
 
 def find_common_prefix(a, b):
     if not a or not b:
