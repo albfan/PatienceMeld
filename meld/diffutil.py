@@ -20,6 +20,7 @@ import difflib
 import gobject
 
 from matchers import MyersSequenceMatcher
+from bzrlib.patiencediff import PatienceSequenceMatcher
 
 ################################################################################
 #
@@ -76,10 +77,13 @@ class Differ(gobject.GObject):
         'diffs-changed': (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, ()),
     }
 
-    _matcher = MyersSequenceMatcher
-
-    def __init__(self):
+    def __init__(self, algorithm="unified"):
         # Internally, diffs are stored from text1 -> text0 and text1 -> text2.
+        self.algorithm = algorithm
+        if (self.algorithm == "unified"):
+            self._matcher = MyersSequenceMatcher
+        else:
+            self._matcher = PatienceSequenceMatcher
         gobject.GObject.__init__(self)
         self.num_sequences = 0
         self.seqlength = [0, 0, 0]
@@ -437,10 +441,14 @@ class Differ(gobject.GObject):
 
         for i in range(self.num_sequences - 1):
             matcher = self._matcher(None, sequences[1], sequences[i*2])
-            work = matcher.initialise()
-            while work.next() is None:
-                yield None
-            self.diffs[i] = matcher.get_difference_opcodes()
+
+            if (self.algorithm == "unified"):
+                work = matcher.initialise()
+                while work.next() is None:
+                    yield None
+                self.diffs[i] = matcher.get_difference_opcodes()
+            else:
+                self.diffs[i] = filter(lambda x: x[0] != "equal", matcher.get_opcodes())
         self._initialised = True
         self._update_merge_cache(sequences)
         yield 1

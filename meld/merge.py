@@ -21,11 +21,14 @@ import matchers
 
 class AutoMergeDiffer(diffutil.Differ):
 
-    _matcher = matchers.MyersSequenceMatcher
-   # _matcher = PatienceSequenceMatcher
 
-    def __init__(self):
-        diffutil.Differ.__init__(self)
+    def __init__(self, algorithm="unified"):
+        diffutil.Differ.__init__(self, algorithm)
+        self.algorithm = algorithm
+        if (sellf.algorithm == "unified"):
+            _matcher = matchers.MyersSequenceMatcher
+        else:
+            _matcher = PatienceSequenceMatcher
         self.auto_merge = False
         self.unresolved = []
 
@@ -162,8 +165,8 @@ class AutoMergeDiffer(diffutil.Differ):
 
 class Merger(diffutil.Differ):
 
-    def __init__(self, ):
-        self.differ = AutoMergeDiffer()
+    def __init__(self, algorithm="unified"):
+        self.differ = AutoMergeDiffer(algorithm)
         self.differ.auto_merge = True
         self.differ.unresolved = []
         self.texts = []

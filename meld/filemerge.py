@@ -26,8 +26,8 @@ class FileMerge(filediff.FileDiff):
 
     differ = merge.AutoMergeDiffer
 
-    def __init__(self, prefs, num_panes):
-        filediff.FileDiff.__init__(self, prefs, num_panes)
+    def __init__(self, prefs, num_panes, algorithm="unified"):
+        filediff.FileDiff.__init__(self, prefs, num_panes, algorithm)
         self.hidden_textbuffer = gtk.TextBuffer()
 
     def _connect_buffer_handlers(self):
@@ -75,7 +75,7 @@ class FileMerge(filediff.FileDiff):
         lines = [x.split("\n") for x in panetext]
         filteredpanetext = [self._filter_text(p) for p in panetext]
         filteredlines = [x.split("\n") for x in filteredpanetext]
-        merger = merge.Merger()
+        merger = merge.Merger(self.algorithm)
         step = merger.initialize(filteredlines, lines)
         while step.next() == None:
             yield 1

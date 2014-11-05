@@ -160,21 +160,20 @@ class MeldApp(gobject.GObject):
 
         parser = optparse.OptionParser(
             usage=usage,
-            description=_("Meld is a file and directory comparison tool."),
-            version="%prog " + version)
-        parser.add_option("-L", "--label", action="append", default=[],
-            help=_("Set label to use instead of file name"))
-        parser.add_option("-a", "--auto-compare", action="store_true", default=False,
-            help=_("Automatically compare all differing files on startup"))
-        parser.add_option("-u", "--unified", action="store_true",
-                          help=_("Ignored for compatibility"))
-        parser.add_option("-o", "--output", action="store", type="string",
-            dest="outfile", default=None,
-            help=_("Set the target file for saving a merge result"))
-        parser.add_option("", "--diff", action="callback", callback=self.diff_files_callback,
-                          dest="diff", default=[],
-                          help=_("Creates a diff tab for up to 3 supplied files or directories."))
+            description=_("Meld is a file and directory comparison tool."), version="%prog " + version)
+        parser.add_option("-L", "--label", action="append", default=[], 
+                help=_("Set label to use instead of file name"))
+        parser.add_option("-a", "--auto-compare", action="store_true", default=False, 
+                help=_("Automatically compare all differing files on startup"))
+        parser.add_option("-u", "--unified", action="store_true", help=_("Ignored for compatibility"))
+        parser.add_option("--algorithm", action="store", type="choice", dest="algorithm", 
+                choices=("unified","raw","patience"), default="unified", help=_("Algorithm for comparing files"))
+        parser.add_option("-o", "--output", action="store", type="string", dest="outfile", default=None, 
+                help=_("Set the target file for saving a merge result"))
+        parser.add_option("--diff", action="callback", callback=self.diff_files_callback, dest="diff", default=[], 
+                help=_("Creates a diff tab for up to 3 supplied files or directories."))
         options, args = parser.parse_args(rawargs)
+
         if len(args) > 4:
             parser.error(_("too many arguments (wanted 0-4, got %d)") % len(args))
         elif len(args) == 4 and any([os.path.isdir(f) for f in args]):
@@ -185,7 +184,7 @@ class MeldApp(gobject.GObject):
                 parser.error(_("can't compare more than three directories"))
             self.window.open_paths(files)
 
-        tab = self.window.open_paths(args, options.auto_compare)
+        tab = self.window.open_paths(args, options.auto_compare, options.algorithm)
         if tab:
             tab.set_labels(options.label)
 

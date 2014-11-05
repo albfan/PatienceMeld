@@ -594,12 +594,12 @@ class MeldWindow(gnomeglade.Component):
             doc.on_button_diff_clicked(None)
         return doc
 
-    def append_filediff(self, files):
+    def append_filediff(self, files, algorithm=None):
         assert len(files) in (1, 2, 3, 4)
         if len(files) == 4:
             doc = filemerge.FileMerge(app.prefs, 3)
         else:
-            doc = filediff.FileDiff(app.prefs, len(files))
+            doc = filediff.FileDiff(app.prefs, len(files), algorithm)
         seq = doc.undosequence
         seq.clear()
         seq.connect("can-undo", self.on_can_undo)
@@ -608,7 +608,7 @@ class MeldWindow(gnomeglade.Component):
         doc.set_files(files)
         return doc
 
-    def append_diff(self, paths, auto_compare=False):
+    def append_diff(self, paths, auto_compare=False, algorithm=None):
         dirslist = [p for p in paths if os.path.isdir(p)]
         fileslist = [p for p in paths if os.path.isfile(p)]
         if dirslist and fileslist:
@@ -633,7 +633,7 @@ class MeldWindow(gnomeglade.Component):
         elif dirslist:
             return self.append_dirdiff(paths, auto_compare)
         else:
-            return self.append_filediff(paths)
+            return self.append_filediff(paths, algorithm)
 
     def append_vcview(self, location, auto_compare=False):
         doc = vcview.VcView(app.prefs)
@@ -655,7 +655,7 @@ class MeldWindow(gnomeglade.Component):
         doc.connect("create-diff", lambda obj,arg: self.append_diff(arg))
         doc.run_diff([path])
 
-    def open_paths(self, paths, auto_compare=False):
+    def open_paths(self, paths, auto_compare=False, algorithm=None):
         tab = None
         if len(paths) == 1:
             a = paths[0]
@@ -665,7 +665,7 @@ class MeldWindow(gnomeglade.Component):
                 tab = self.append_vcview(a, auto_compare)
 
         elif len(paths) in (2, 3, 4):
-            tab = self.append_diff(paths, auto_compare)
+            tab = self.append_diff(paths, auto_compare, algorithm)
         return tab
 
     def current_doc(self):
