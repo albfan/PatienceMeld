@@ -61,7 +61,7 @@ class CachedSequenceMatcher(object):
 
     process_pool = None
 
-    def __init__(self):
+    def __init__(self,  algorithm="unified"):
         if self.process_pool is None:
             if os.name == "nt":
                 CachedSequenceMatcher.process_pool = ThreadPool(None)
@@ -74,6 +74,7 @@ class CachedSequenceMatcher(object):
                     CachedSequenceMatcher.process_pool = Pool(
                         None, matchers.init_worker)
         self.cache = {}
+        self.algorithm = algorithm
 
     def match(self, text1, textn, cb):
         try:
@@ -84,6 +85,11 @@ class CachedSequenceMatcher(object):
             # callback appears to run identically.
             GLib.idle_add(lambda: cb(opcodes))
         except KeyError:
+           from bzrlib.patiencediff import PatienceSequenceMatcher
+            if (self.algorithm == "patience"):
+                matcher = PatienceSequenceMatcher(None, text1, textn)
+            else:
+                matcher = matchers.MyersSequenceMatcher(None, text1, textn)
             def inline_cb(opcodes):
                 self.cache[(text1, textn)] = [opcodes, time.time()]
                 GLib.idle_add(lambda: cb(opcodes))
@@ -172,9 +178,10 @@ class FileDiff(melddoc.MeldDoc, gnomeglade.Component):
         'action-mode-changed': (GObject.SignalFlags.RUN_FIRST, None, (int,)),
     }
 
-    def __init__(self, num_panes):
+    def __init__(self, num_panes, algorithm="unified"):
         """Start up an filediff with num_panes empty contents.
         """
+     self.algorithm=algorithm
         melddoc.MeldDoc.__init__(self)
         gnomeglade.Component.__init__(self, "filediff.ui", "filediff")
         bind_settings(self)
@@ -228,7 +235,7 @@ class FileDiff(melddoc.MeldDoc, gnomeglade.Component):
         self._sync_vscroll_lock = False
         self._sync_hscroll_lock = False
         self._scroll_lock = False
-        self.linediffer = self.differ()
+        self.linediffer = self.differ(self.algorithm)
         self.force_highlight = False
         self.syncpoints = []
         self.in_nested_textview_gutter_expose = False
@@ -632,7 +639,7 @@ class FileDiff(melddoc.MeldDoc, gnomeglade.Component):
         dst = self._get_focused_pane()
         src = dst + direction
         assert src in range(self.num_panes)
-        merger = merge.Merger()
+        merger = merge.Merger(self.algorithm)
         merger.differ = self.linediffer
         merger.texts = self.buffer_texts
         for mergedfile in merger.merge_2_files(src, dst):
@@ -648,7 +655,7 @@ class FileDiff(melddoc.MeldDoc, gnomeglade.Component):
 
     def merge_all_non_conflicting_changes(self):
         dst = 1
-        merger = merge.Merger()
+        merger = merge.Merger(self.algorithm)
         merger.differ = self.linediffer
         merger.texts = self.buffer_texts
         for mergedfile in merger.merge_3_files(False):

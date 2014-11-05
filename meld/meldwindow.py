@@ -640,7 +640,7 @@ class MeldWindow(gnomeglade.Component):
             doc.on_button_diff_clicked(None)
         return doc
 
-    def append_filediff(self, files,  merge_output=None, meta=None):
+    def append_filediff(self, files,  merge_output=None, meta=None, algorithm=None):
         assert len(files) in (1, 2, 3)
         doc = filediff.FileDiff(len(files))
         self._append_page(doc, "text-x-generic")

@@ -69,8 +69,13 @@ class Differ(GObject.GObject):
     _matcher = MyersSequenceMatcher
     _sync_matcher = SyncPointMyersSequenceMatcher
 
-    def __init__(self):
+    def __init__(self, algorithm="unified"):
         # Internally, diffs are stored from text1 -> text0 and text1 -> text2.
+        self.algorithm = algorithm
+        if (self.algorithm == "unified"):
+            self._matcher = MyersSequenceMatcher
+        else:
+            self._matcher = PatienceSequenceMatcher
         GObject.GObject.__init__(self)
         self.num_sequences = 0
         self.seqlength = [0, 0, 0]

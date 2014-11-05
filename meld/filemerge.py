@@ -25,6 +25,10 @@ class FileMerge(filediff.FileDiff):
 
     differ = merge.AutoMergeDiffer
 
+    def __init__(self, algorithm="unified"):
+        filediff.FileDiff.__init__
+        self.algorithm = algorithm
+
     def _connect_buffer_handlers(self):
         filediff.FileDiff._connect_buffer_handlers(self)
         self.textview[0].set_editable(0)
@@ -35,7 +39,7 @@ class FileMerge(filediff.FileDiff):
         return recent.TYPE_MERGE, comp[1]
 
     def _set_files_internal(self, files):
-        self.textview[1].set_buffer(meldbuffer.MeldBuffer())
+        self.textview[1].set_buffer(meldbuffer.MeldBuffer(self.algorithm))
         for i in self._load_files(files, self.textbuffer):
             yield i
         for i in self._merge_files():
@@ -46,7 +50,7 @@ class FileMerge(filediff.FileDiff):
 
     def _merge_files(self):
         yield _("[%s] Merging files") % self.label_text
-        merger = merge.Merger()
+        merger = merge.Merger(self.algorithm)
         step = merger.initialize(self.buffer_filtered, self.buffer_texts)
         while next(step) is None:
             yield 1

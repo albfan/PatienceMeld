@@ -242,6 +242,8 @@ class MeldApp(Gtk.Application):
         parser.add_option(
             "-u", "--unified", action="store_true",
             help=_("Ignored for compatibility"))
+        parser.add_option("--algorithm", action="store", type="choice", dest="algorithm", 
+                choices=("unified","raw","patience"), default="unified", help=_("Algorithm for comparing files"))
         parser.add_option(
             "-o", "--output", action="store", type="string",
             dest="outfile", default=None,
@@ -313,7 +315,7 @@ class MeldApp(Gtk.Application):
                 tab = self.open_files(
                     files, auto_compare=options.auto_compare,
                     auto_merge=auto_merge, new_tab=options.newtab,
-                    focus=i == 0)
+                    focus=i == 0,options.algorithm)
             except ValueError as err:
                 error = err
             else:
