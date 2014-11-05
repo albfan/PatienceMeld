@@ -1,0 +1,27 @@
+1. Beautiful is better than ugly.
+  3.   Simple is better than complex.
+  4. Complicated is better than complex.
+  5. Flat is better than nested.
+
+  function hi {
+    if (true) {
+        print "Hello"
+    }
+  }
+
+  function bye {
+    while (true) {
+        switch a:
+            case
+            print "aaaa"*4
+            break
+    }
+  }
+
+  function eco {
+    if (true) {
+        yyy = 98
+    } else {
+        cant = 45 + 3
+    }
+  }

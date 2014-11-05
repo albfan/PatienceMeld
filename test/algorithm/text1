@@ -1,0 +1,18 @@
+  1. Beautiful is better than ugly.
+  2. Explicit is better than implicit.
+  3. Simple is better than complex.
+  4. Complex is better than complicated.
+
+  function hi {
+    if (true) {
+        print "Hello"
+    }
+  }
+
+  function eco {
+    if (true) {
+        yyy = 98
+    } else {
+        cant = 45 + 3
+    }
+  }
